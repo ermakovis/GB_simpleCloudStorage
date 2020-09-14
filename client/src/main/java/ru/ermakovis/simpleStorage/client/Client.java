@@ -1,25 +1,33 @@
 package ru.ermakovis.simpleStorage.client;
 
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ermakovis.simpleStorage.common.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.ResultSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Client {
+public class Client extends Application {
     private final Logger logger = LoggerFactory.getLogger(Client.class);
-    private final Path rootPath;
-    private final Network network = new Network("localhost", 8189);
 
-    public Client(String rootName) {
-        rootPath = Path.of(rootName);
-        sendFile("test.iso");
-        sendFile("test.txt");
-        receiveFile("test2.iso");
-        System.out.println("Network started");
-    }
+    private Network network;
+    private Path rootPath;
 
     public boolean sendFile(String fileName) {
         logger.info("Sending file - " + fileName);
@@ -65,6 +73,14 @@ public class Client {
         return true;
     }
 
+    public boolean removeLocalFile(String fileName) {
+        return false;
+    }
+
+    public boolean removeRemoteFile(String fileName) {
+        return false;
+    }
+
     public void sendMessage(Message message) {
         try {
             network.sendMessage(message);
@@ -73,8 +89,57 @@ public class Client {
         }
     }
 
+    public Object receiveMessage() {
+        try {
+            return network.receiveMessage();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<String> getLocalItems() {
+        logger.info("Getting local items");
+        System.out.println(rootPath.toString());
+        try (Stream<Path> walk = Files.walk(rootPath)) {
+            return walk.filter(Files::isRegularFile)
+                    .map(rootPath::relativize)
+                    .map(Path::toString)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<String> getRemoteItems() {
+        logger.info("Getting remote items");
+        sendMessage(new FileListMessage());
+        Object object = receiveMessage();
+        return (List<String>) object;
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        rootPath = Path.of("C:", "admin", "server");
+        network = new Network("localhost", 8189);
+        Thread.sleep(1000);
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client.fxml"));
+        Parent root = loader.load();
+        Controller controller = loader.getController();
+        controller.initController(this);
+        stage.setResizable(false);
+        stage.setTitle("SimpleCloudStorage");
+        stage.setScene(new Scene(root));
+        stage.show();
+        stage.setOnCloseRequest((event) -> {
+            network.stop();
+            Platform.exit();
+        });
+    }
+
     public static void main(String[] args) {
-        String rootName = Path.of("C:", "admin", "client").toString();
-        new Client(rootName);
+        launch(args);
     }
 }

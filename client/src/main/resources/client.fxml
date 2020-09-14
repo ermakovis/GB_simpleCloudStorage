@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ru.ermakovis.simpleStorage.client.Controller">
+    <children>
+        <HBox prefHeight="550.0" prefWidth="550.0">
+            <children>
+                <Pane prefHeight="550.0" prefWidth="10.0"/>
+                <VBox prefHeight="550.0" prefWidth="380.0">
+                    <children>
+                        <Pane prefHeight="40.0" prefWidth="380.0">
+                            <children>
+                                <Button fx:id="uploadButton" layoutX="164.0" layoutY="7.0" mnemonicParsing="false"
+                                        onAction="#uploadButtonAction" text="Button"/>
+                            </children>
+                        </Pane>
+                        <ScrollPane prefHeight="510.0" prefWidth="380.0">
+                            <content>
+                                <ListView fx:id="localItems" prefHeight="510.0" prefWidth="380.0"/>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+                <Pane prefHeight="550.0" prefWidth="20.0"/>
+                <VBox prefHeight="550.0" prefWidth="380.0">
+                    <children>
+                        <Pane prefHeight="40.0" prefWidth="380.0">
+                            <children>
+                                <Button fx:id="downloadButton" layoutX="164.0" layoutY="7.0" mnemonicParsing="false"
+                                        onAction="#downloadButtonAction" text="Button"/>
+                            </children>
+                        </Pane>
+                        <ScrollPane prefHeight="510.0" prefWidth="380.0">
+                            <content>
+                                <ListView fx:id="remoteItems" prefHeight="510.0" prefWidth="380.0"/>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+                <Pane prefHeight="550.0" prefWidth="10.0"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>

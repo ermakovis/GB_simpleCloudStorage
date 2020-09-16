@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
@@ -28,6 +29,14 @@ public class Client extends Application {
 
     private Network network;
     private Path rootPath;
+
+    public void showError(String header, String text) {
+        //TODO add styles
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText(header);
+        alert.setContentText(text);
+        alert.showAndWait();
+    }
 
     public boolean sendFile(String fileName) {
         logger.info("Sending file - " + fileName);
@@ -80,6 +89,7 @@ public class Client extends Application {
     public boolean removeRemoteFile(String fileName) {
         return false;
     }
+
 
     public void sendMessage(Message message) {
         try {

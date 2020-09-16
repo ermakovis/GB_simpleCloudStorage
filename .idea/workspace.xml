@@ -28,6 +28,9 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
     <property name="restartRequiresConfirmation" value="false" />
   </component>
   <component name="RecentsManager">
@@ -78,7 +81,9 @@
       <updated>1600020935224</updated>
       <workItem from="1600020936521" duration="10965000" />
       <workItem from="1600055863976" duration="112000" />
-      <workItem from="1600056096785" duration="17229000" />
+      <workItem from="1600056096785" duration="18579000" />
+      <workItem from="1600266873302" duration="3044000" />
+      <workItem from="1600269940719" duration="2643000" />
     </task>
     <servers />
   </component>
@@ -98,22 +103,22 @@
       <screen x="0" y="0" width="2293" height="920" />
     </state>
     <state x="878" y="208" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600070877107" />
-    <state width="2250" height="242" key="GridCell.Tab.0.bottom" timestamp="1600074507417">
+    <state width="2250" height="550" key="GridCell.Tab.0.bottom" timestamp="1600272696984">
       <screen x="0" y="0" width="2293" height="920" />
     </state>
-    <state width="2250" height="242" key="GridCell.Tab.0.bottom/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600074507417" />
-    <state width="2250" height="242" key="GridCell.Tab.0.center" timestamp="1600074507417">
+    <state width="2250" height="550" key="GridCell.Tab.0.bottom/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600272696984" />
+    <state width="2250" height="550" key="GridCell.Tab.0.center" timestamp="1600272696984">
       <screen x="0" y="0" width="2293" height="920" />
     </state>
-    <state width="2250" height="242" key="GridCell.Tab.0.center/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600074507417" />
-    <state width="2250" height="242" key="GridCell.Tab.0.left" timestamp="1600074507416">
+    <state width="2250" height="550" key="GridCell.Tab.0.center/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600272696984" />
+    <state width="2250" height="550" key="GridCell.Tab.0.left" timestamp="1600272696983">
       <screen x="0" y="0" width="2293" height="920" />
     </state>
-    <state width="2250" height="242" key="GridCell.Tab.0.left/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600074507416" />
-    <state width="2250" height="242" key="GridCell.Tab.0.right" timestamp="1600074507417">
+    <state width="2250" height="550" key="GridCell.Tab.0.left/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600272696983" />
+    <state width="2250" height="550" key="GridCell.Tab.0.right" timestamp="1600272696984">
       <screen x="0" y="0" width="2293" height="920" />
     </state>
-    <state width="2250" height="242" key="GridCell.Tab.0.right/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600074507417" />
+    <state width="2250" height="550" key="GridCell.Tab.0.right/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600272696984" />
     <state width="2250" height="300" key="GridCell.Tab.1.bottom" timestamp="1600071588771">
       <screen x="0" y="0" width="2293" height="920" />
     </state>
@@ -130,6 +135,10 @@
       <screen x="0" y="0" width="2293" height="920" />
     </state>
     <state width="2250" height="300" key="GridCell.Tab.1.right/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600071588771" />
+    <state x="628" y="35" key="SettingsEditor" timestamp="1600266926964">
+      <screen x="0" y="0" width="2293" height="920" />
+    </state>
+    <state x="628" y="35" key="SettingsEditor/0.0.2293.920/3440.0.1920.1040@0.0.2293.920" timestamp="1600266926964" />
     <state x="786" y="122" key="new project wizard" timestamp="1600020983910">
       <screen x="0" y="0" width="2293" height="920" />
     </state>

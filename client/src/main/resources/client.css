@@ -1,0 +1,44 @@
+.button:focused {
+    -fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color;
+    -fx-background-insets: 0, 1, 2;
+    -fx-background-radius: 5, 4, 3;
+}
+
+.button {
+    -fx-background-size: 26 26;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-padding: 2;
+}
+
+#localDeleteButton, #remoteDeleteButton, .button {
+    -fx-background-image: url("images/remove.png");
+}
+
+#localCreateButton, #remoteCreateButton, .button {
+    -fx-background-image: url("images/create.png");
+}
+
+#localRefreshButton, #remoteRefreshButton, .button {
+    -fx-background-image: url("images/refresh.png");
+}
+
+#localUpFolderButton, #remoteUpFolderButton, .button {
+    -fx-background-image: url("images/up.png");
+}
+
+#localPrevFolderButton, #remotePrevFolderButton, .button {
+    -fx-background-image: url("images/previous.png");
+}
+
+#localNextFolderButton, #remoteNextFolderButton, .button{
+    -fx-background-image: url("images/next.png");
+}
+
+#uploadButton, .button {
+    -fx-background-image: url("images/next.png");
+}
+
+#downloadButton, .button {
+    -fx-background-image: url("images/next.png");
+}

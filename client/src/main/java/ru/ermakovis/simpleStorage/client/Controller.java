@@ -17,10 +17,29 @@ public class Controller {
     private Client client;
 
     @FXML
+    private ListView<String> remoteItems;
+
+    @FXML
     private ListView<String> localItems;
 
     @FXML
-    private ListView<String> remoteItems;
+    private Button localRefreshButton;
+
+    @FXML
+    private Button localCreateButton;
+
+    @FXML
+    private Button localDeleteButton;
+
+    @FXML
+    private Button localUpFolderButton;
+
+    @FXML
+    private Button localPrevFolderButton;
+
+    @FXML
+    private Button localNextFolderButton;
+
 
     @FXML
     private Button uploadButton;
@@ -29,13 +48,82 @@ public class Controller {
     private Button downloadButton;
 
     @FXML
+    private Button remoteRefreshButton;
+
+    @FXML
+    private Button remoteCreateButton;
+
+    @FXML
+    private Button remoteDeleteButton;
+
+    @FXML
+    private Button remoteUpFolderButton;
+
+    @FXML
+    private Button remotePrevFolderButton;
+
+    @FXML
+    private Button remoteNextFolderButton;
+
+
+    @FXML
     void downloadButtonAction(ActionEvent event) {
-        System.out.println("DOWNLOAD!");
+
+    }
+
+    @FXML
+    void localCreateButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void localDeleteButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void localNextFolderButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void localPrevFolderButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void localRefreshButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void remoteCreateButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void remoteDeleteButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void remoteNextFolderButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void remotePrevFolderButtonAction(ActionEvent event) {
+
+    }
+
+    @FXML
+    void remoteRefreshButtonAction(ActionEvent event) {
+
     }
 
     @FXML
     void uploadButtonAction(ActionEvent event) {
-        System.out.println("UPLOAD!");
+
     }
 
     public void initController(Client client) {

@@ -21,7 +21,7 @@
                                 <Button fx:id="localRefreshButton" mnemonicParsing="false" onAction="#localRefreshButtonAction" prefHeight="30" prefWidth="30"/>
                                 <Button fx:id="localCreateButton" mnemonicParsing="false" onAction="#localCreateButtonAction" prefHeight="30" prefWidth="30"/>
                                 <Button fx:id="localDeleteButton" mnemonicParsing="false" onAction="#localDeleteButtonAction" prefHeight="30" prefWidth="30"/>
-                                <Button fx:id="localUpFolderButton" mnemonicParsing="false" onAction="#localPrevFolderButtonAction" prefHeight="30" prefWidth="30">
+                                <Button fx:id="localUpFolderButton" mnemonicParsing="false" onAction="#localUpFolderButtonAction" prefHeight="30" prefWidth="30">
                            <HBox.margin>
                               <Insets left="10.0" />
                            </HBox.margin></Button>
@@ -61,7 +61,7 @@
                                 <Button fx:id="remoteRefreshButton" mnemonicParsing="false" onAction="#remoteRefreshButtonAction" prefHeight="30" prefWidth="30"/>
                                 <Button fx:id="remoteCreateButton" mnemonicParsing="false" onAction="#remoteCreateButtonAction" prefHeight="30" prefWidth="30"/>
                                 <Button fx:id="remoteDeleteButton" mnemonicParsing="false" onAction="#remoteDeleteButtonAction" prefHeight="30" prefWidth="30"/>
-                                <Button fx:id="remoteUpFolderButton" mnemonicParsing="false" onAction="#remotePrevFolderButtonAction" prefHeight="30" prefWidth="30">
+                                <Button fx:id="remoteUpFolderButton" mnemonicParsing="false" onAction="#remoteUpFolderButtonAction" prefHeight="30" prefWidth="30">
                                     <HBox.margin>
                                         <Insets left="10.0" />
                                     </HBox.margin></Button>

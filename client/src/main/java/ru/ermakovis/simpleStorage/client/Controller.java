@@ -4,23 +4,27 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.layout.Pane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.ermakovis.simpleStorage.common.FileInfoMessage;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.nio.file.Path;
+import java.util.List;
 
 public class Controller {
-    private final ObservableList<String> localItemsList = FXCollections.observableArrayList();
-    private final ObservableList<String> remoteItemsList = FXCollections.observableArrayList();
+    private final Logger logger = LoggerFactory.getLogger(Controller.class);
+    private final ObservableList<Pane> localItemsList = FXCollections.observableArrayList();
+    private final ObservableList<Pane> remoteItemsList = FXCollections.observableArrayList();
     private Client client;
 
     @FXML
-    private ListView<String> remoteItems;
+    private ListView<Pane> remoteItems;
 
     @FXML
-    private ListView<String> localItems;
+    private ListView<Pane> localItems;
 
     @FXML
     private Button localRefreshButton;
@@ -92,8 +96,37 @@ public class Controller {
     }
 
     @FXML
-    void localRefreshButtonAction(ActionEvent event) {
+    void localUpFolderButtonAction(ActionEvent event) {
+        logger.info("LocalUpButton pressed");
+        Path parentPath = client.getLocalRoot().getParent();
+        if (parentPath == null) {
+            return;
+        }
+        client.setLocalRoot(parentPath);
+        refreshLocalList();
+    }
 
+    @FXML
+    void remoteUpFolderButtonAction(ActionEvent event) {
+        logger.info("remoteUpFolderButton pressed");
+        Path parentPath = client.getRemoteRoot().getParent();
+        if (parentPath == null) {
+            client.setRemoteRoot(Path.of(""));
+        }
+        client.setRemoteRoot(parentPath);
+        refreshRemoteList();
+    }
+
+    @FXML
+    void localRefreshButtonAction(ActionEvent event) {
+        logger.info("LocalRefreshButton pressed");
+        refreshLocalList();
+    }
+
+    @FXML
+    void remoteRefreshButtonAction(ActionEvent event) {
+        logger.info("RemoteRefreshButton pressed");
+        refreshRemoteList();
     }
 
     @FXML
@@ -116,21 +149,48 @@ public class Controller {
 
     }
 
-    @FXML
-    void remoteRefreshButtonAction(ActionEvent event) {
 
-    }
 
     @FXML
     void uploadButtonAction(ActionEvent event) {
 
     }
 
+    public void refreshLocalList() {
+        refreshList(localItemsList, client.getLocalItems());
+    }
+
+    public void refreshRemoteList() {
+        refreshList(remoteItemsList, client.getRemoteItems());
+    }
+
+    public void refreshList(ObservableList<Pane> list, List<FileInfoMessage> items) {
+        list.clear();
+        for (FileInfoMessage fileInfoMessage : items) {
+            list.add(new DisplayItem(fileInfoMessage));
+        }
+    }
+
     public void initController(Client client) {
         this.client = client;
         localItems.setItems(localItemsList);
         remoteItems.setItems(remoteItemsList);
-        localItemsList.addAll(client.getLocalItems());
-        remoteItemsList.addAll(client.getRemoteItems());
+        localItems.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                DisplayItem item = (DisplayItem) localItems.getSelectionModel().getSelectedItem();
+                client.setLocalRoot(client.getLocalRoot().resolve(item.getFileName()));
+                refreshLocalList();
+            }
+        });
+        remoteItems.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                DisplayItem item = (DisplayItem) remoteItems.getSelectionModel().getSelectedItem();
+                client.setRemoteRoot(client.getRemoteRoot().resolve(item.getFileName()));
+                refreshRemoteList();
+            }
+        });
+
+        refreshLocalList();
+        refreshRemoteList();
     }
 }

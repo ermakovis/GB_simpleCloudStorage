@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(MainHandler.class);
@@ -34,19 +33,35 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             logger.info("FileDownloadMessage received");
             handleFileDownloadMessage((FileDownloadMessage) msg, ctx);
         } else if (msg instanceof FileListMessage) {
-            handleFileListMessage(ctx);
+            logger.info("FileListMessage received");
+            handleFileListMessage((FileListMessage) msg, ctx);
         }
     }
 
-    private void handleFileListMessage(ChannelHandlerContext ctx) {
+    private void handleFileListMessage(FileListMessage message, ChannelHandlerContext ctx) {
         logger.info("Getting local items");
-        try (Stream<Path> walk = Files.walk(rootPath)) {
-            List<String> items = walk.filter(Files::isRegularFile)
-                    .map(Path::toString)
-                    .collect(Collectors.toList());
-            ctx.channel().writeAndFlush(items);
+        Path currentRootPath = rootPath.resolve(message.getRoot());
+        try {
+            List<FileInfoMessage> list =
+                    Files.list(currentRootPath)
+                            .sorted()
+                            .sorted((a, b) -> Boolean.compare(Files.isDirectory(b), Files.isDirectory(a)))
+                            .map(a -> getLocalItem(a, currentRootPath))
+                            .collect(Collectors.toList());
+            ctx.channel().writeAndFlush(list);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public FileInfoMessage getLocalItem(Path path, Path currentRootPath) {
+        String fileName = currentRootPath.relativize(path).toString();
+        try {
+            long fileSize = Files.isDirectory(path) ? -1 : Files.size(path);
+            System.out.println(fileName + " " + fileSize);
+            return new FileInfoMessage(fileName, fileSize);
+        } catch (IOException e) {
+            return new FileInfoMessage(fileName, 0);
         }
     }
 
@@ -67,7 +82,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 ctx.channel().writeAndFlush(chunkMessage);
             }
             inputStream.close();
-        } catch (IOException e ) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

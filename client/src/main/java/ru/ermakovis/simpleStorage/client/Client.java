@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Client extends Application {
     private final Logger logger = LoggerFactory.getLogger(Client.class);
@@ -24,6 +25,30 @@ public class Client extends Application {
     private Network network;
     private Path localRoot;
     private Path remoteRoot = Path.of("");
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        localRoot = Path.of(System.getProperty("user.home"));
+        network = new Network("localhost", 8189);
+        Thread.sleep(1000);
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client.fxml"));
+        Parent root = loader.load();
+        Controller controller = loader.getController();
+        controller.initController(this);
+        stage.setResizable(false);
+        stage.setTitle("SimpleCloudStorage");
+        stage.setScene(new Scene(root));
+        stage.show();
+        stage.setOnCloseRequest((event) -> {
+            network.stop();
+            Platform.exit();
+        });
+    }
 
     public void showError(String header, String text) {
         //TODO add styles
@@ -33,13 +58,29 @@ public class Client extends Application {
         alert.showAndWait();
     }
 
-    public boolean sendFile(String fileName) {
+    public void sendFiles(String fileName) {
+        logger.info("Start of sending routine");
+        if (!Files.isDirectory(localRoot.resolve(fileName))) {
+            sendFile(fileName);
+            return;
+        }
+
+        try (Stream<Path> walk = Files.walk(localRoot.resolve(fileName))) {
+            walk.filter(Files::isRegularFile)
+                .forEach(path -> sendFile(localRoot.relativize(path).toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //TODO handle errors
+    public void sendFile(String fileName) {
         logger.info("Sending file - " + fileName);
         Path filePath = localRoot.resolve(fileName);
         try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(filePath.toFile()))) {
             network.sendMessage(new FileUploadMessage(fileName));
             if (!((ResultMessage) network.receiveMessage()).isSuccessful()) {
-                return false;
+                return;
             }
             int bytesRead = 0;
             byte[] buf = new byte[65535];
@@ -50,18 +91,41 @@ public class Client extends Application {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
-        return true;
     }
 
-    public boolean receiveFile(String fileName) {
-        logger.info("Sending receive request - " + fileName);
-        try (BufferedOutputStream stream =
-                     new BufferedOutputStream(new FileOutputStream(localRoot.resolve(fileName).toFile()))) {
-            sendMessage(new FileDownloadMessage(fileName));
-            if (!((ResultMessage) network.receiveMessage()).isSuccessful()) {
-                return false;
+    public void receiveFiles(String fileName) {
+        logger.info("Sending receive list request - " + fileName);
+        try {
+            sendMessage(new FileDownloadListMessage(remoteRoot.resolve(fileName).toString()));
+            List<String> fileList = (List<String>) network.receiveMessage();
+            logger.info("Received list of size - " + fileList.size());
+            for (String file : fileList) {
+                receiveFile(file);
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //TODO handle errors
+    public void receiveFile(String fileName) {
+        logger.info("Receiving file " + fileName);
+        Path filePath = localRoot.resolve(fileName);
+        try {
+            if (!Files.exists(filePath.getParent())) {
+                Files.createDirectories(filePath.getParent());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()))) {
+            network.sendMessage(new FileDownloadMessage(fileName));
+            ResultMessage resultMessage = (ResultMessage) network.receiveMessage();
+            if (!resultMessage.isSuccessful()) {
+                return;
             }
             while (true) {
                 FileChunkMessage chunkMessage = (FileChunkMessage) network.receiveMessage();
@@ -72,9 +136,7 @@ public class Client extends Application {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
-        return true;
     }
 
     public boolean removeLocalFile(String fileName) {
@@ -134,25 +196,7 @@ public class Client extends Application {
         return (List<FileInfoMessage>) object;
     }
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        localRoot = Path.of(System.getProperty("user.home"));
-        network = new Network("localhost", 8189);
-        Thread.sleep(1000);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client.fxml"));
-        Parent root = loader.load();
-        Controller controller = loader.getController();
-        controller.initController(this);
-        stage.setResizable(false);
-        stage.setTitle("SimpleCloudStorage");
-        stage.setScene(new Scene(root));
-        stage.show();
-        stage.setOnCloseRequest((event) -> {
-            network.stop();
-            Platform.exit();
-        });
-    }
 
     public Path getLocalRoot() {
         return localRoot;
@@ -166,12 +210,11 @@ public class Client extends Application {
         return remoteRoot;
     }
 
+    //почему-то Path.of("") в качестве аргумента он не принимает
     public void setRemoteRoot(Path remoteRoot) {
         this.remoteRoot = remoteRoot == null ? Path.of("") : remoteRoot;
     }
 
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+
 }

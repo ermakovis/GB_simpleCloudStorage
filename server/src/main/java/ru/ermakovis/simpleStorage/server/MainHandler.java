@@ -9,8 +9,11 @@ import ru.ermakovis.simpleStorage.common.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(MainHandler.class);
@@ -35,6 +38,80 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof FileListMessage) {
             logger.info("FileListMessage received");
             handleFileListMessage((FileListMessage) msg, ctx);
+        } else if (msg instanceof FileDownloadListMessage) {
+            logger.info("FileDownloadList received");
+            handleFileDownloadListMessage((FileDownloadListMessage) msg, ctx);
+        }
+    }
+
+
+    private void handleFileDownloadListMessage(FileDownloadListMessage message, ChannelHandlerContext ctx) {
+        Path root = rootPath.resolve(message.getFileName());
+        if (!Files.isDirectory(root)) {
+            ctx.channel().writeAndFlush(List.of(message.getFileName()));
+            return;
+        }
+
+        try (Stream<Path> walk = Files.walk(root)) {
+            List<String> list = walk.filter(Files::isRegularFile)
+                    .map(rootPath::relativize)
+                    .map(Path::toString)
+                    .collect(Collectors.toList());
+            ctx.channel().writeAndFlush(list);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleFileDownloadMessage(FileDownloadMessage message, ChannelHandlerContext ctx) {
+        Path filePath = rootPath.resolve(message.getFileName());
+        try {
+            if (!Files.exists(filePath.getParent())) {
+                Files.createDirectories(filePath.getParent());
+            }
+        } catch (IOException e) {
+            ctx.channel().writeAndFlush(new ResultMessage(false));
+        }
+
+        try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(filePath.toFile()))) {
+            String fileName = message.getFileName();
+            ctx.channel().writeAndFlush(new ResultMessage(true));
+            int bytesRead;
+            byte[] buf = new byte[65535];
+            while ((bytesRead = inputStream.read(buf)) != -1) {
+                FileChunkMessage chunkMessage =
+                        new FileChunkMessage(fileName, buf, bytesRead, inputStream.available() == 0);
+                ctx.channel().writeAndFlush(chunkMessage);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleFileUploadMessage(FileUploadMessage message, ChannelHandlerContext ctx) {
+        try {
+            String fileName = message.getFileName();
+            Path filePath = rootPath.resolve(fileName);
+            if (!Files.exists(filePath.getParent())) {
+                Files.createDirectories(filePath.getParent());
+            }
+            outputStream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
+            ctx.channel().writeAndFlush(new ResultMessage(true));
+        } catch (IOException e) {
+            e.printStackTrace();
+            ctx.channel().writeAndFlush(new ResultMessage(false));
+        }
+    }
+
+    private void handleFileChunkMessage(FileChunkMessage message) {
+        try {
+            outputStream.write(message.getChunk(), 0, message.getSize());
+            if (message.isFinal()) {
+                logger.info("FileReceive finished");
+                outputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -65,52 +142,4 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void handleFileDownloadMessage(FileDownloadMessage message, ChannelHandlerContext ctx) {
-        try {
-            String fileName = message.getFileName();
-            Path filePath = rootPath.resolve(fileName);
-            if (!Files.exists(filePath.getParent())) {
-                Files.createDirectories(filePath.getParent());
-            }
-            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(filePath.toFile()));
-            ctx.channel().writeAndFlush(new ResultMessage(true));
-            int bytesRead;
-            byte[] buf = new byte[65535];
-            while ((bytesRead = inputStream.read(buf)) != -1) {
-                FileChunkMessage chunkMessage =
-                        new FileChunkMessage(fileName, buf, bytesRead, inputStream.available() == 0);
-                ctx.channel().writeAndFlush(chunkMessage);
-            }
-            inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleFileUploadMessage(FileUploadMessage message, ChannelHandlerContext ctx) {
-        try {
-            String fileName = message.getFileName();
-            Path filePath = rootPath.resolve(fileName);
-            if (Files.exists(filePath.getParent())) {
-                Files.createDirectories(filePath.getParent());
-            }
-            outputStream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
-            ctx.channel().writeAndFlush(new ResultMessage(true));
-        } catch (IOException e) {
-            e.printStackTrace();
-            ctx.channel().writeAndFlush(new ResultMessage(false));
-        }
-    }
-
-    private void handleFileChunkMessage(FileChunkMessage message) {
-        try {
-            outputStream.write(message.getChunk(), 0, message.getSize());
-            if (message.isFinal()) {
-                logger.info("FileReceive finished");
-                outputStream.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

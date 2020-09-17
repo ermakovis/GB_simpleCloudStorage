@@ -69,12 +69,6 @@ public class Controller {
     @FXML
     private Button remoteNextFolderButton;
 
-
-    @FXML
-    void downloadButtonAction(ActionEvent event) {
-
-    }
-
     @FXML
     void localCreateButtonAction(ActionEvent event) {
 
@@ -107,7 +101,7 @@ public class Controller {
     }
 
     @FXML
-    void remoteUpFolderButtonAction(ActionEvent event) {
+    void remoteUpFolderButtonAction(ActionEvent ignored) {
         logger.info("remoteUpFolderButton pressed");
         Path parentPath = client.getRemoteRoot().getParent();
         if (parentPath == null) {
@@ -150,10 +144,24 @@ public class Controller {
     }
 
 
+    @FXML
+    void uploadButtonAction(ActionEvent ignored) {
+        DisplayItem item = (DisplayItem) localItems.getSelectionModel().getSelectedItem();
+        if (item == null) {
+            return;
+        }
+        client.sendFiles(item.getFileName());
+        refreshRemoteList();
+    }
 
     @FXML
-    void uploadButtonAction(ActionEvent event) {
-
+    void downloadButtonAction(ActionEvent ignored) {
+        DisplayItem item = (DisplayItem) remoteItems.getSelectionModel().getSelectedItem();
+        if (item == null) {
+            return;
+        }
+        client.receiveFiles(item.getFileName());
+        refreshLocalList();
     }
 
     public void refreshLocalList() {

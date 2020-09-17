@@ -3,7 +3,6 @@ package ru.ermakovis.simpleStorage.server;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -59,7 +58,6 @@ public class Server {
 
         String rootPath = Path.of("C:", "admin", "server").toString();
         int port = 8189;
-
 
         Server server = new Server(rootPath, port);
         server.run();;

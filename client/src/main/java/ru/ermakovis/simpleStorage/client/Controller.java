@@ -2,7 +2,6 @@ package ru.ermakovis.simpleStorage.client;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
@@ -32,13 +31,35 @@ public class Controller {
     private ListView<Pane> localItems;
 
     @FXML
-    void localCreateButtonAction(ActionEvent event) {
+    void localCreateButtonAction() {
 
     }
 
     @FXML
-    void localDeleteButtonAction(ActionEvent event) {
+    void remoteCreateButtonAction() {
 
+    }
+
+    @FXML
+    void localDeleteButtonAction() {
+        logger.info("LocalDeleteButton pressed");
+        DisplayItem item = getSelectedItem(localItems);
+        if (item == null) {
+            return;
+        }
+        client.removeLocalFiles(item.getFileName());
+        refreshLocalList();
+    }
+
+    @FXML
+    void remoteDeleteButtonAction() {
+        logger.info("RemoteDeleteButton pressed");
+        DisplayItem item = getSelectedItem(remoteItems);
+        if (item == null) {
+            return;
+        }
+        client.removeRemoteFile(item.getFileName());
+        refreshRemoteList();
     }
 
     @FXML
@@ -62,7 +83,7 @@ public class Controller {
     }
 
     @FXML
-    void localPrevFolderButtonAction(ActionEvent event) {
+    void localPrevFolderButtonAction() {
         logger.info("LocalPrevFolder button pressed");
         if (localHistory.size() == 0) {
             return;
@@ -74,7 +95,7 @@ public class Controller {
     }
 
     @FXML
-    void remotePrevFolderButtonAction(ActionEvent event) {
+    void remotePrevFolderButtonAction() {
         logger.info("RemotePrevFolderButton pressed");
         if (remoteHistory.size() == 0) {
             return;
@@ -86,7 +107,7 @@ public class Controller {
     }
 
     @FXML
-    void localUpFolderButtonAction(ActionEvent event) {
+    void localUpFolderButtonAction() {
         logger.info("LocalUpButton pressed");
         Path localPath = client.getLocalRoot();
         Path parentPath = localPath.getParent();
@@ -97,7 +118,7 @@ public class Controller {
     }
 
     @FXML
-    void remoteUpFolderButtonAction(ActionEvent ignored) {
+    void remoteUpFolderButtonAction() {
         logger.info("remoteUpFolderButton pressed");
         Path remoteRoot = client.getRemoteRoot();
         Path parentPath = remoteRoot.getParent();
@@ -108,30 +129,20 @@ public class Controller {
     }
 
     @FXML
-    void localRefreshButtonAction(ActionEvent event) {
+    void localRefreshButtonAction() {
         logger.info("LocalRefreshButton pressed");
         refreshLocalList();
     }
 
     @FXML
-    void remoteRefreshButtonAction(ActionEvent event) {
+    void remoteRefreshButtonAction() {
         logger.info("RemoteRefreshButton pressed");
         refreshRemoteList();
     }
 
     @FXML
-    void remoteCreateButtonAction(ActionEvent event) {
-
-    }
-
-    @FXML
-    void remoteDeleteButtonAction(ActionEvent event) {
-
-    }
-
-    @FXML
-    void uploadButtonAction(ActionEvent ignored) {
-        DisplayItem item = (DisplayItem) localItems.getSelectionModel().getSelectedItem();
+    void uploadButtonAction() {
+        DisplayItem item = getSelectedItem(localItems);
         if (item == null) {
             return;
         }
@@ -140,8 +151,8 @@ public class Controller {
     }
 
     @FXML
-    void downloadButtonAction(ActionEvent ignored) {
-        DisplayItem item = (DisplayItem) remoteItems.getSelectionModel().getSelectedItem();
+    void downloadButtonAction() {
+        DisplayItem item = getSelectedItem(remoteItems);
         if (item == null) {
             return;
         }
@@ -184,21 +195,23 @@ public class Controller {
         }
     }
 
+    public DisplayItem getSelectedItem(ListView<Pane> listView) {
+        return (DisplayItem) listView.getSelectionModel().getSelectedItem();
+    }
+
     public void initController(Client client) {
         this.client = client;
         localItems.setItems(localItemsList);
         remoteItems.setItems(remoteItemsList);
         localItems.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
-                DisplayItem item = (DisplayItem) localItems.getSelectionModel().getSelectedItem();
-                setLocalRoot(client.getLocalRoot().resolve(item.getFileName()));
+                setLocalRoot(client.getLocalRoot().resolve(getSelectedItem(localItems).getFileName()));
                 localHistoryRedo.clear();
             }
         });
         remoteItems.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
-                DisplayItem item = (DisplayItem) remoteItems.getSelectionModel().getSelectedItem();
-                setRemoteRoot(client.getRemoteRoot().resolve(item.getFileName()));
+                setRemoteRoot(client.getRemoteRoot().resolve(getSelectedItem(remoteItems).getFileName()));
                 remoteHistoryRedo.clear();
             }
         });

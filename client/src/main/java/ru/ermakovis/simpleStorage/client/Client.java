@@ -15,16 +15,16 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Client extends Application {
     private final Logger logger = LoggerFactory.getLogger(Client.class);
-
     private Network network;
-    private Path localRoot;
     private Path remoteRoot = Path.of("");
+    private Path localRoot = Path.of(System.getProperty("user.home"));
 
     public static void main(String[] args) {
         launch(args);
@@ -32,7 +32,6 @@ public class Client extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        localRoot = Path.of(System.getProperty("user.home"));
         network = new Network("localhost", 8189);
         Thread.sleep(1000);
 
@@ -67,13 +66,12 @@ public class Client extends Application {
 
         try (Stream<Path> walk = Files.walk(localRoot.resolve(fileName))) {
             walk.filter(Files::isRegularFile)
-                .forEach(path -> sendFile(localRoot.relativize(path).toString()));
+                    .forEach(path -> sendFile(localRoot.relativize(path).toString()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    //TODO handle errors
     public void sendFile(String fileName) {
         logger.info("Sending file - " + fileName);
         Path filePath = localRoot.resolve(fileName);
@@ -94,6 +92,7 @@ public class Client extends Application {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void receiveFiles(String fileName) {
         logger.info("Sending receive list request - " + fileName);
         try {
@@ -108,7 +107,6 @@ public class Client extends Application {
         }
     }
 
-    //TODO handle errors
     public void receiveFile(String fileName) {
         logger.info("Receiving file " + fileName);
         Path filePath = localRoot.resolve(fileName);
@@ -139,12 +137,34 @@ public class Client extends Application {
         }
     }
 
-    public boolean removeLocalFile(String fileName) {
-        return false;
+    public void removeLocalFiles(String fileName) {
+        Path filePath = localRoot.resolve(fileName);
+        if (!Files.isDirectory(filePath)) {
+
+            removeLocalFile(filePath);
+            return;
+        }
+        logger.info("Removing local folder");
+        try {
+            Files.walk(filePath)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(this::removeLocalFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public boolean removeRemoteFile(String fileName) {
-        return false;
+    public void removeLocalFile(Path path) {
+        try {
+            Files.delete(path);
+            logger.info("Local file removed - " + path);
+        } catch (IOException ignored) {
+        }
+    }
+
+    public void removeRemoteFile(String fileName) {
+        logger.info("Sending remove message");
+        sendMessage(new FileRemoveMessage(remoteRoot.resolve(fileName).toString()));
     }
 
     public void sendMessage(Message message) {
@@ -197,7 +217,6 @@ public class Client extends Application {
     }
 
 
-
     public Path getLocalRoot() {
         return localRoot;
     }
@@ -214,7 +233,6 @@ public class Client extends Application {
     public void setRemoteRoot(Path remoteRoot) {
         this.remoteRoot = remoteRoot == null ? Path.of("") : remoteRoot;
     }
-
 
 
 }

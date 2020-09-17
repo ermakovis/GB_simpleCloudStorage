@@ -9,8 +9,7 @@ import ru.ermakovis.simpleStorage.common.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,9 +40,35 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof FileDownloadListMessage) {
             logger.info("FileDownloadList received");
             handleFileDownloadListMessage((FileDownloadListMessage) msg, ctx);
+        } else if (msg instanceof FileRemoveMessage) {
+            logger.info("FileRemoveMessage received");
+            handleFileRemoveMessage((FileRemoveMessage) msg);
         }
     }
 
+    private void handleFileRemoveMessage(FileRemoveMessage message) {
+        Path filePath = rootPath.resolve(message.getFileName());
+        if (!Files.isDirectory(filePath)) {
+            removeLocalFile(filePath);
+            return;
+        }
+        logger.info("Removing local folder");
+        try {
+            Files.walk(filePath)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(this::removeLocalFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void removeLocalFile(Path path) {
+        try {
+            Files.delete(path);
+            logger.info("Local file removed - " + path);
+        } catch (IOException ignored) {
+        }
+    }
 
     private void handleFileDownloadListMessage(FileDownloadListMessage message, ChannelHandlerContext ctx) {
         Path root = rootPath.resolve(message.getFileName());
@@ -131,11 +156,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public FileInfoMessage getLocalItem(Path path, Path currentRootPath) {
+    private FileInfoMessage getLocalItem(Path path, Path currentRootPath) {
         String fileName = currentRootPath.relativize(path).toString();
         try {
             long fileSize = Files.isDirectory(path) ? -1 : Files.size(path);
-            System.out.println(fileName + " " + fileSize);
             return new FileInfoMessage(fileName, fileSize);
         } catch (IOException e) {
             return new FileInfoMessage(fileName, 0);

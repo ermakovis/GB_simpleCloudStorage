@@ -40,5 +40,5 @@
 }
 
 #downloadButton, .button {
-    -fx-background-image: url("images/next.png");
+    -fx-background-image: url("images/previous.png");
 }

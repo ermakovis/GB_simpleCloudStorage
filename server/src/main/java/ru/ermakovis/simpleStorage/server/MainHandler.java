@@ -95,12 +95,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 Files.createDirectories(filePath.getParent());
             }
         } catch (IOException e) {
-            ctx.channel().writeAndFlush(new ResultMessage(false));
+            ctx.channel().writeAndFlush(new ResultMessage(e));
         }
 
         try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(filePath.toFile()))) {
             String fileName = message.getFileName();
-            ctx.channel().writeAndFlush(new ResultMessage(true));
+            ctx.channel().writeAndFlush(new ResultMessage());
             int bytesRead;
             byte[] buf = new byte[65535];
             while ((bytesRead = inputStream.read(buf)) != -1) {
@@ -121,10 +121,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 Files.createDirectories(filePath.getParent());
             }
             outputStream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
-            ctx.channel().writeAndFlush(new ResultMessage(true));
+            ctx.channel().writeAndFlush(new ResultMessage());
         } catch (IOException e) {
-            e.printStackTrace();
-            ctx.channel().writeAndFlush(new ResultMessage(false));
+            logger.error(e.getMessage());
+            ctx.channel().writeAndFlush(new ResultMessage(e));
         }
     }
 
@@ -136,12 +136,11 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 outputStream.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     private void handleFileListMessage(FileListMessage message, ChannelHandlerContext ctx) {
-        logger.info("Getting local items");
         Path currentRootPath = rootPath.resolve(message.getRoot());
         try {
             List<FileInfoMessage> list =
@@ -152,7 +151,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                             .collect(Collectors.toList());
             ctx.channel().writeAndFlush(list);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 

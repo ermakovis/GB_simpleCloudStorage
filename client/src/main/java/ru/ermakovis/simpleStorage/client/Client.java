@@ -6,6 +6,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +36,12 @@ public class Client extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        network = new Network("localhost", 8189);
+        try {
+            network = new Network("localhost", 8189);
+        } catch (IOException e) {
+            showError(e);
+        }
         Thread.sleep(1000);
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client.fxml"));
         Parent root = loader.load();
         Controller controller = loader.getController();
@@ -49,11 +56,34 @@ public class Client extends Application {
         });
     }
 
-    public void showError(String header, String text) {
-        //TODO add styles
+    public void showError(Throwable throwable) {
+        logger.error(throwable.getMessage());
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setHeaderText(header);
-        alert.setContentText(text);
+        alert.setTitle("Error message");
+        alert.setHeaderText("Exception was thrown");
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        throwable.printStackTrace(pw);
+        String exceptionText = sw.toString();
+
+        Label label = new Label("The exception stacktrace was:");
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
+
+        alert.getDialogPane().setExpandableContent(expContent);
+
         alert.showAndWait();
     }
 
@@ -77,10 +107,11 @@ public class Client extends Application {
         Path filePath = localRoot.resolve(fileName);
         try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(filePath.toFile()))) {
             network.sendMessage(new FileUploadMessage(fileName));
-            if (!((ResultMessage) network.receiveMessage()).isSuccessful()) {
-                return;
+            ResultMessage resultMessage = (ResultMessage) network.receiveMessage();
+            if (!resultMessage.isSuccessful()) {
+                showError(resultMessage.getError());
             }
-            int bytesRead = 0;
+            int bytesRead;
             byte[] buf = new byte[65535];
             while ((bytesRead = stream.read(buf)) != -1) {
                 FileChunkMessage message =
@@ -88,7 +119,7 @@ public class Client extends Application {
                 sendMessage(message);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            showError(e);
         }
     }
 
@@ -103,7 +134,7 @@ public class Client extends Application {
                 receiveFile(file);
             }
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            showError(e);
         }
     }
 
@@ -115,14 +146,14 @@ public class Client extends Application {
                 Files.createDirectories(filePath.getParent());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            showError(e);
             return;
         }
 
         try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()))) {
             network.sendMessage(new FileDownloadMessage(fileName));
             ResultMessage resultMessage = (ResultMessage) network.receiveMessage();
-            if (!resultMessage.isSuccessful()) {
+            if (resultMessage.isSuccessful()) {
                 return;
             }
             while (true) {
@@ -133,14 +164,13 @@ public class Client extends Application {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            showError(e);
         }
     }
 
     public void removeLocalFiles(String fileName) {
         Path filePath = localRoot.resolve(fileName);
         if (!Files.isDirectory(filePath)) {
-
             removeLocalFile(filePath);
             return;
         }
@@ -150,7 +180,7 @@ public class Client extends Application {
                     .sorted(Comparator.reverseOrder())
                     .forEach(this::removeLocalFile);
         } catch (IOException e) {
-            e.printStackTrace();
+            showError(e);
         }
     }
 
@@ -158,7 +188,8 @@ public class Client extends Application {
         try {
             Files.delete(path);
             logger.info("Local file removed - " + path);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            showError(e);
         }
     }
 
@@ -171,7 +202,7 @@ public class Client extends Application {
         try {
             network.sendMessage(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            showError(e);
         }
     }
 
@@ -179,7 +210,7 @@ public class Client extends Application {
         try {
             return network.receiveMessage();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            showError(e);
         }
         return null;
     }
@@ -193,7 +224,7 @@ public class Client extends Application {
                     .map(this::getLocalItem)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            e.printStackTrace();
+            showError(e);
         }
         return new ArrayList<>();
     }
@@ -208,6 +239,7 @@ public class Client extends Application {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<FileInfoMessage> getRemoteItems() {
         logger.info("Getting remote items");
         System.out.println(remoteRoot);
@@ -215,7 +247,6 @@ public class Client extends Application {
         Object object = receiveMessage();
         return (List<FileInfoMessage>) object;
     }
-
 
     public Path getLocalRoot() {
         return localRoot;
@@ -233,6 +264,4 @@ public class Client extends Application {
     public void setRemoteRoot(Path remoteRoot) {
         this.remoteRoot = remoteRoot == null ? Path.of("") : remoteRoot;
     }
-
-
 }

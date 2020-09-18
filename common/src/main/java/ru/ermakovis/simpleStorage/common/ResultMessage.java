@@ -1,13 +1,21 @@
 package ru.ermakovis.simpleStorage.common;
 
 public class ResultMessage extends Message {
-    private final boolean isSuccessful;
+    private final Throwable error;
 
-    public ResultMessage(boolean isSuccessful) {
-        this.isSuccessful = isSuccessful;
+    public ResultMessage(Throwable error) {
+        this.error = error;
+    }
+
+    public ResultMessage() {
+        this.error = null;
     }
 
     public boolean isSuccessful() {
-        return isSuccessful;
+        return error == null;
+    }
+
+    public Throwable getError() {
+        return error;
     }
 }

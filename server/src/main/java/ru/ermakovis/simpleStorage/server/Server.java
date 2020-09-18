@@ -54,10 +54,8 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        //TODO init config
-
-        String rootPath = Path.of("C:", "admin", "server").toString();
-        int port = 8189;
+        String rootPath = Path.of(args[0]).toString();
+        int port = Integer.parseInt(args[1]);
 
         Server server = new Server(rootPath, port);
         server.run();;

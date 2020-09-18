@@ -7,18 +7,14 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class Network {
-    private Socket socket;
-    private ObjectEncoderOutputStream output;
-    private ObjectDecoderInputStream input;
+    private final Socket socket;
+    private final ObjectEncoderOutputStream output;
+    private final ObjectDecoderInputStream input;
 
-    public Network(String serverAddress, int port) {
-        try {
-            socket = new Socket(serverAddress, port);
-            output = new ObjectEncoderOutputStream(socket.getOutputStream());
-            input = new ObjectDecoderInputStream(socket.getInputStream());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public Network(String serverAddress, int port) throws IOException {
+        socket = new Socket(serverAddress, port);
+        output = new ObjectEncoderOutputStream(socket.getOutputStream());
+        input = new ObjectDecoderInputStream(socket.getInputStream());
     }
 
     public void sendMessage(Object msg) throws IOException {
@@ -34,9 +30,7 @@ public class Network {
             output.close();
             input.close();
             socket.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
-
     }
 }

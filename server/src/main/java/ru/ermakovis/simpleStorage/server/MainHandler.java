@@ -43,7 +43,20 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof FileRemoveMessage) {
             logger.info("FileRemoveMessage received");
             handleFileRemoveMessage((FileRemoveMessage) msg);
+        } else if (msg instanceof FileCreateMessage) {
+            logger.info("FileCreateMessage received");
+            handleFileCreateMessage((FileCreateMessage) msg, ctx);
         }
+    }
+
+    private void handleFileCreateMessage(FileCreateMessage message, ChannelHandlerContext ctx) {
+        try {
+            Files.createDirectory(rootPath.resolve(message.getFileName()));
+            ctx.channel().writeAndFlush(new ResultMessage());
+        } catch (Exception e) {
+            ctx.channel().writeAndFlush(new ResultMessage(e));
+        }
+
     }
 
     private void handleFileRemoveMessage(FileRemoveMessage message) {
@@ -57,7 +70,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             Files.walk(filePath)
                     .sorted(Comparator.reverseOrder())
                     .forEach(this::removeLocalFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -66,7 +79,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         try {
             Files.delete(path);
             logger.info("Local file removed - " + path);
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -83,7 +96,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                     .map(Path::toString)
                     .collect(Collectors.toList());
             ctx.channel().writeAndFlush(list);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -94,7 +107,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if (!Files.exists(filePath.getParent())) {
                 Files.createDirectories(filePath.getParent());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             ctx.channel().writeAndFlush(new ResultMessage(e));
         }
 
@@ -108,7 +121,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                         new FileChunkMessage(fileName, buf, bytesRead, inputStream.available() == 0);
                 ctx.channel().writeAndFlush(chunkMessage);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -122,7 +135,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             }
             outputStream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
             ctx.channel().writeAndFlush(new ResultMessage());
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             ctx.channel().writeAndFlush(new ResultMessage(e));
         }

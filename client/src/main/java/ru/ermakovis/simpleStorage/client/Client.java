@@ -97,8 +97,8 @@ public class Client extends Application {
         try (Stream<Path> walk = Files.walk(localRoot.resolve(fileName))) {
             walk.filter(Files::isRegularFile)
                     .forEach(path -> sendFile(localRoot.relativize(path).toString()));
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            showError(e);
         }
     }
 
@@ -133,7 +133,7 @@ public class Client extends Application {
             for (String file : fileList) {
                 receiveFile(file);
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             showError(e);
         }
     }
@@ -145,7 +145,7 @@ public class Client extends Application {
             if (!Files.exists(filePath.getParent())) {
                 Files.createDirectories(filePath.getParent());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             showError(e);
             return;
         }
@@ -168,6 +168,22 @@ public class Client extends Application {
         }
     }
 
+    public void createLocalFolder(String fileName) {
+        try {
+            Files.createDirectory(localRoot.resolve(fileName));
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    public void createRemoteFolder(String fileName) {
+        sendMessage(new FileCreateMessage(remoteRoot.resolve(fileName).toString()));
+        ResultMessage resultMessage = (ResultMessage) receiveMessage();
+        if (!resultMessage.isSuccessful()) {
+            showError(resultMessage.getError());
+        }
+    }
+
     public void removeLocalFiles(String fileName) {
         Path filePath = localRoot.resolve(fileName);
         if (!Files.isDirectory(filePath)) {
@@ -179,7 +195,7 @@ public class Client extends Application {
             Files.walk(filePath)
                     .sorted(Comparator.reverseOrder())
                     .forEach(this::removeLocalFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
             showError(e);
         }
     }
@@ -188,7 +204,7 @@ public class Client extends Application {
         try {
             Files.delete(path);
             logger.info("Local file removed - " + path);
-        } catch (IOException e) {
+        } catch (Exception e) {
             showError(e);
         }
     }
@@ -209,7 +225,7 @@ public class Client extends Application {
     public Object receiveMessage() {
         try {
             return network.receiveMessage();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             showError(e);
         }
         return null;
@@ -223,7 +239,7 @@ public class Client extends Application {
                     .sorted((a, b) -> Boolean.compare(Files.isDirectory(b), Files.isDirectory(a)))
                     .map(this::getLocalItem)
                     .collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (Exception e) {
             showError(e);
         }
         return new ArrayList<>();
@@ -234,7 +250,7 @@ public class Client extends Application {
         try {
             long fileSize = Files.isDirectory(path) ? -1 : Files.size(path);
             return new FileInfoMessage(fileName, fileSize);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return new FileInfoMessage(fileName, 0);
         }
     }

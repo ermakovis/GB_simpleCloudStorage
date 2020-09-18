@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.Pane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 
 public class Controller {
     private final Deque<Path> localHistory = new ArrayDeque<>();
@@ -32,12 +34,24 @@ public class Controller {
 
     @FXML
     void localCreateButtonAction() {
-
+        logger.info("LocalCreateButton pressed");
+        client.createLocalFolder(getUserInput());
+        refreshLocalList();
     }
 
     @FXML
     void remoteCreateButtonAction() {
+        logger.info("RemoteCreateButton pressed");
+        client.createRemoteFolder(getUserInput());
+        refreshRemoteList();
+    }
 
+    public String getUserInput() {
+        TextInputDialog textInputDialog = new TextInputDialog();
+        textInputDialog.setTitle("Folder creation dialog");
+        textInputDialog.getDialogPane().setContentText("FolderName: ");
+        Optional<String> result = textInputDialog.showAndWait();
+        return result.orElse(null);
     }
 
     @FXML

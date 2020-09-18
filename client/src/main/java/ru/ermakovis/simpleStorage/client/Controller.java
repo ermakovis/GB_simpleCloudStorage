@@ -1,11 +1,15 @@
 package ru.ermakovis.simpleStorage.client;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextInputDialog;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ermakovis.simpleStorage.common.FileInfoMessage;
@@ -213,10 +217,13 @@ public class Controller {
         return (DisplayItem) listView.getSelectionModel().getSelectedItem();
     }
 
+
+
     public void initController(Client client) {
         this.client = client;
         localItems.setItems(localItemsList);
         remoteItems.setItems(remoteItemsList);
+
         localItems.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
                 setLocalRoot(client.getLocalRoot().resolve(getSelectedItem(localItems).getFileName()));

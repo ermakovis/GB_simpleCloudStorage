@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(MainHandler.class);
-    private final Path rootPath;
+    private Path rootPath;
 
     private BufferedOutputStream outputStream = null;
 
@@ -26,7 +26,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        if (msg instanceof FileUploadMessage) {
+        if (msg instanceof AuthMessage) {
+            logger.info("AuthMessage received");
+            handleAuthMessage((AuthMessage) msg, ctx);
+        } else if (msg instanceof FileUploadMessage) {
             logger.info("FileUploadMessage received");
             handleFileUploadMessage((FileUploadMessage) msg, ctx);
         } else if (msg instanceof FileChunkMessage) {
@@ -47,6 +50,19 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             logger.info("FileCreateMessage received");
             handleFileCreateMessage((FileCreateMessage) msg, ctx);
         }
+    }
+
+    private void handleAuthMessage(AuthMessage message, ChannelHandlerContext ctx) {
+        try {
+            if (!Files.exists(rootPath.resolve(message.getUserName()))) {
+                Files.createDirectory(rootPath.resolve(message.getUserName()));
+            }
+            rootPath = rootPath.resolve(message.getUserName());
+            ctx.channel().writeAndFlush(new ResultMessage());
+        } catch (Exception e) {
+            ctx.channel().writeAndFlush(new ResultMessage(e));
+        }
+
     }
 
     private void handleFileCreateMessage(FileCreateMessage message, ChannelHandlerContext ctx) {
@@ -112,13 +128,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         }
 
         try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(filePath.toFile()))) {
-            String fileName = message.getFileName();
             ctx.channel().writeAndFlush(new ResultMessage());
             int bytesRead;
             byte[] buf = new byte[65535];
             while ((bytesRead = inputStream.read(buf)) != -1) {
                 FileChunkMessage chunkMessage =
-                        new FileChunkMessage(fileName, buf, bytesRead, inputStream.available() == 0);
+                        new FileChunkMessage(buf, bytesRead, inputStream.available() == 0);
                 ctx.channel().writeAndFlush(chunkMessage);
             }
         } catch (Exception e) {

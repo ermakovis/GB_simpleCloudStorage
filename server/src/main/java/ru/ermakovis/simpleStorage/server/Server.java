@@ -58,6 +58,6 @@ public class Server {
         int port = Integer.parseInt(args[1]);
 
         Server server = new Server(rootPath, port);
-        server.run();;
+        server.run();
     }
 }

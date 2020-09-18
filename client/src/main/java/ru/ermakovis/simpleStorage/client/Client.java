@@ -2,15 +2,18 @@ package ru.ermakovis.simpleStorage.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ermakovis.simpleStorage.common.*;
@@ -21,6 +24,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,12 +40,9 @@ public class Client extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        try {
-            network = new Network("localhost", 8189);
-        } catch (IOException e) {
-            showError(e);
-        }
-        Thread.sleep(1000);
+        network = getNetwork();
+
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client.fxml"));
         Parent root = loader.load();
         Controller controller = loader.getController();
@@ -115,7 +116,7 @@ public class Client extends Application {
             byte[] buf = new byte[65535];
             while ((bytesRead = stream.read(buf)) != -1) {
                 FileChunkMessage message =
-                        new FileChunkMessage(fileName, buf, bytesRead, stream.available() == 0);
+                        new FileChunkMessage(buf, bytesRead, stream.available() == 0);
                 sendMessage(message);
             }
         } catch (Exception e) {
@@ -262,6 +263,70 @@ public class Client extends Application {
         sendMessage(new FileListMessage(remoteRoot.toString()));
         Object object = receiveMessage();
         return (List<FileInfoMessage>) object;
+    }
+
+    private Network getNetwork() {
+        try {
+            Pair<String, String> pair = getServerInfo();
+            System.out.println(pair.getKey() + " " + pair.getValue());
+            String[] serverInfo = pair.getKey().split(":");
+            Network network = new Network(serverInfo[0], Integer.parseInt(serverInfo[1]));
+            Thread.sleep(1000);
+            network.sendMessage(new AuthMessage(pair.getValue()));
+            ResultMessage message = (ResultMessage) network.receiveMessage();
+            if (!message.isSuccessful()) {
+                showError(message.getError());
+            } else {
+                return network;
+            }
+        } catch (Exception ignored) {
+        }
+        showError(new Throwable("Failed to connect :("));
+        System.exit(1);
+        return null;
+    }
+
+    private Pair<String, String> getServerInfo() {
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.setTitle("Input Dialog");
+
+        ButtonType loginButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField serverInfo = new TextField();
+        TextField userName = new TextField();
+
+        grid.add(new Label("Address:"), 0, 0);
+        grid.add(serverInfo, 1, 0);
+        grid.add(new Label("UserName:"), 0, 1);
+        grid.add(userName, 1, 1);
+
+        Node acceptButton = dialog.getDialogPane().lookupButton(loginButtonType);
+        acceptButton.setDisable(true);
+
+        serverInfo.textProperty().addListener((observable, oldValue, newValue) -> {
+            acceptButton.setDisable(newValue.trim().isEmpty());
+        });
+
+        dialog.getDialogPane().setContent(grid);
+
+        Platform.runLater(serverInfo::requestFocus);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButtonType) {
+                return new Pair<>(serverInfo.getText(), userName.getText());
+            }
+            return null;
+        });
+
+        Optional<Pair<String, String>> result = dialog.showAndWait();
+        return result.orElse(null);
     }
 
     public Path getLocalRoot() {

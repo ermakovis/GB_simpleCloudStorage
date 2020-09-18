@@ -1,20 +1,14 @@
 package ru.ermakovis.simpleStorage.common;
 
 public class FileChunkMessage extends Message {
-    private final String fileName;
     private final byte[] chunk;
     private final int size;
     private final boolean isFinal;
 
-    public FileChunkMessage(String fileName, byte[] chunk, int size, boolean isFinal) {
-        this.fileName = fileName;
+    public FileChunkMessage(byte[] chunk, int size, boolean isFinal) {
         this.chunk = chunk;
         this.size = size;
         this.isFinal = isFinal;
-    }
-
-    public String getFileName() {
-        return fileName;
     }
 
     public byte[] getChunk() {
